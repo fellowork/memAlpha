@@ -12,6 +12,15 @@ A local memory system for AI coding agents with MCP (Model Context Protocol) ser
 - 🔌 **OpenAI Compatible**: Optional OpenAI embeddings API support
 - 🧪 **Well Tested**: Comprehensive unit tests and BDD scenarios
 
+## CI/CD
+
+This project includes GitHub Actions workflows for automated testing and deployment:
+
+- **`test-and-merge.yml`**: Runs tests on `dev` branch, auto-creates PR and merges to `main` when tests pass
+- **`test-main.yml`**: Runs tests on `main` branch and PRs
+
+See [`.github/SETUP.md`](.github/SETUP.md) for detailed setup instructions.
+
 ## Quick Start
 
 ### Run from GitHub (Recommended)
