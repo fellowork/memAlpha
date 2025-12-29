@@ -76,6 +76,7 @@ secrets/
 
 # Data storage (local memory data)
 data/
+scratchpads/
 *.db
 *.sqlite
 *.sqlite3
