@@ -21,7 +21,7 @@ dev = [
 ]
 
 [project.scripts]
-memalpha = "src.server:main"
+memalpha = "src.server:run"
 
 [build-system]
 requires = ["hatchling"]
