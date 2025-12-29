@@ -22,7 +22,7 @@ Add to your MCP client configuration (e.g., Claude Desktop, Cursor):
 {
   "memAlpha": {
     "command": "uvx",
-    "args": ["--from", "git+https://github.com/yourusername/memAlpha", "memalpha"]
+    "args": ["--from", "git+https://github.com/fellowork/memAlpha", "memalpha"]
   }
 }
 ```
@@ -33,7 +33,7 @@ That's it! The first run will download dependencies automatically.
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/memAlpha.git
+git clone https://github.com/fellowork/memAlpha.git
 cd memAlpha
 
 # Install dependencies
@@ -82,7 +82,7 @@ MCP configuration with environment variables:
 {
   "memAlpha": {
     "command": "uvx",
-    "args": ["--from", "git+https://github.com/yourusername/memAlpha", "memalpha"],
+    "args": ["--from", "git+https://github.com/fellowork/memAlpha", "memalpha"],
     "env": {
       "MEMALPHA_EMBEDDING_PROVIDER": "openai",
       "MEMALPHA_OPENAI_API_KEY": "sk-..."
