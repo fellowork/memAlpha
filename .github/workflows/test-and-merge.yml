@@ -23,13 +23,19 @@ jobs:
       
       - name: Install uv
         uses: astral-sh/setup-uv@v4
-        with:
-          enable-cache: true
       
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.10'
+      
+      - name: Cache virtual environment
+        uses: actions/cache@v4
+        with:
+          path: .venv
+          key: venv-${{ runner.os }}-py3.10-${{ hashFiles('pyproject.toml') }}
+          restore-keys: |
+            venv-${{ runner.os }}-py3.10-
       
       - name: Install dependencies
         run: |
@@ -84,7 +90,7 @@ jobs:
         if: steps.check-pr.outputs.pr_exists == 'false'
         id: create-pr
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           PR_URL=$(gh pr create \
             --base main \
@@ -143,7 +149,7 @@ jobs:
       - name: Enable auto-merge
         if: steps.get-pr.outputs.pr_number != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           gh pr merge ${{ steps.get-pr.outputs.pr_number }} \
             --auto \
@@ -154,7 +160,7 @@ jobs:
       - name: Approve PR
         if: steps.get-pr.outputs.pr_number != ''
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
           # GitHub doesn't allow self-approval in the same workflow
           # This will be handled by branch protection rules

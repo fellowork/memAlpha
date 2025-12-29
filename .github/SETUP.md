@@ -37,6 +37,21 @@ This repository uses GitHub Actions for automated testing and deployment.
    - Go to: `Settings` → `Actions` → `General` → `Workflow permissions`
    - Select: "Read and write permissions"
    - Check: ☑️ "Allow GitHub Actions to create and approve pull requests"
+   
+   **⚠️ If this option is greyed out:**
+   
+   **For Organization Repositories:**
+   1. Go to **Organization Settings**: `https://github.com/organizations/YOUR_ORG/settings`
+   2. Navigate to: `Actions` → `General`
+   3. Scroll to: `Workflow permissions`
+   4. Enable: ☑️ "Allow GitHub Actions to create and approve pull requests"
+   5. Save, then return to repository settings
+   
+   **Alternative: Use Personal Access Token (PAT):**
+   1. Create PAT: https://github.com/settings/tokens
+   2. Select scopes: `repo`, `workflow`
+   3. Add to repository secrets as `GH_PAT`
+   4. Workflow will automatically use it (already configured)
 
 ### Optional: Branch Protection Rules
 
@@ -223,11 +238,39 @@ Add to workflows:
 
 ## 🐛 Troubleshooting
 
+### "Allow GitHub Actions to create and approve pull requests" is Greyed Out
+
+**Cause:** Organization-level policy restriction
+
+**Solution 1 - Organization Settings (Recommended):**
+1. You need **organization admin** access
+2. Go to: `https://github.com/organizations/YOUR_ORG/settings/actions`
+3. Scroll to: "Workflow permissions"
+4. Enable: ☑️ "Allow GitHub Actions to create and approve pull requests"
+5. Save and return to repository settings (should now be enabled)
+
+**Solution 2 - Use Personal Access Token:**
+1. Create PAT at: https://github.com/settings/tokens
+   - Click "Generate new token (classic)"
+   - Name: `memAlpha Auto-Merge`
+   - Scopes: ☑️ `repo` + ☑️ `workflow`
+   - Generate and copy token
+2. Add to repo secrets:
+   - Repository → Settings → Secrets → Actions
+   - New secret: `GH_PAT` = your token
+3. Workflow already configured to use it!
+
+**Solution 3 - Simplified Workflow (Manual Approval):**
+1. Rename `test-and-pr.yml.disabled` to `test-and-pr.yml`
+2. Disable `test-and-merge.yml`
+3. PRs will be created but require manual approval
+
 ### "Auto-merge is not allowed"
 
 **Solution:** Enable in repository settings:
 - Settings → Actions → General
 - ☑️ "Allow GitHub Actions to create and approve pull requests"
+- If greyed out, see above ⬆️
 
 ### "Branch protection rules not satisfied"
 
