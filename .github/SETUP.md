@@ -27,6 +27,25 @@ This repository uses GitHub Actions for automated testing and deployment.
 
 ## 🚀 Setup Instructions
 
+### Optional: Create Labels (Recommended)
+
+Create helpful labels for automated PRs:
+
+```bash
+# Using GitHub CLI
+gh label create "automated" --color "0E8A16" --description "Automated by GitHub Actions"
+gh label create "auto-merge" --color "1D76DB" --description "Ready for auto-merge"
+
+# Or create via GitHub UI:
+# Repository → Issues → Labels → New label
+```
+
+**Labels:**
+- `automated` - Green (#0E8A16) - Marks automated PRs
+- `auto-merge` - Blue (#1D76DB) - Indicates auto-merge enabled
+
+*Note: Labels are optional. The workflow works without them.*
+
 ### Required: Repository Settings
 
 1. **Enable Actions**
@@ -287,6 +306,22 @@ Add to workflows:
 ### "PR already exists"
 
 **Note:** This is normal! The workflow will update the existing PR.
+
+### "could not add label: 'automated' not found"
+
+**Cause:** Labels don't exist in the repository
+
+**Solution:** Labels are now optional (workflow updated). To add them:
+
+```bash
+# Create labels using gh CLI
+gh label create "automated" --color "0E8A16" --description "Automated by GitHub Actions"
+gh label create "auto-merge" --color "1D76DB" --description "Ready for auto-merge"
+
+# Or via UI: Repository → Issues → Labels → New label
+```
+
+The workflow will work fine without labels!
 
 ## 📚 Additional Resources
 

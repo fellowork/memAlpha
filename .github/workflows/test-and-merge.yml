@@ -108,9 +108,7 @@ jobs:
           This PR contains all changes from the \`dev\` branch that have passed tests.
           
           ---
-          🤖 This PR was automatically created and will be auto-merged." \
-            --label "automated" \
-            --label "auto-merge")
+          🤖 This PR was automatically created and will be auto-merged.")
           
           echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
           echo "Created PR: $PR_URL"
