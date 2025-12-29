@@ -100,13 +100,16 @@ By default, data is stored at:
 Structure:
 ```
 ~/.local/share/memalpha/
-├── chroma/          # ChromaDB vector store
+├── chroma/          # ChromaDB vector store (memories)
+├── scratchpads/     # JSON files (one per agent/project)
 └── models/          # Cached embedding models (local only)
 ```
 
 ## MCP Tools
 
-### `store_memory`
+### Memory Tools
+
+#### `store_memory`
 
 Store a new memory for an agent.
 
@@ -197,6 +200,64 @@ Get suggestions for memory structure and best practices.
 **Parameters:** None
 
 **Returns:** Suggested categories, metadata fields, examples, and tips.
+
+---
+
+### Scratchpad Tools
+
+Each agent can have **ONE scratchpad per project** - a simple notepad for jotting down notes, TODOs, or temporary information. Unlike memories, scratchpads are not searchable and are meant for quick note-taking.
+
+#### `create_scratchpad`
+
+Create a scratchpad for an agent in a project.
+
+**Parameters:**
+- `project_id` (string, required): Project identifier
+- `agent_id` (string, required): Agent identifier
+- `content` (string, optional): Initial content (default: empty)
+
+**Example:**
+```json
+{
+  "project_id": "my-web-app",
+  "agent_id": "cursor-assistant",
+  "content": "TODO:\n- Fix authentication bug\n- Add dark mode toggle"
+}
+```
+
+#### `get_scratchpad`
+
+Get the scratchpad for an agent in a project.
+
+**Parameters:**
+- `project_id` (string, required): Project identifier
+- `agent_id` (string, required): Agent identifier
+
+#### `update_scratchpad`
+
+Update the scratchpad content.
+
+**Parameters:**
+- `project_id` (string, required): Project identifier
+- `agent_id` (string, required): Agent identifier
+- `content` (string, required): New content
+
+**Example:**
+```json
+{
+  "project_id": "my-web-app",
+  "agent_id": "cursor-assistant",
+  "content": "DONE:\n✓ Fixed auth bug\n\nTODO:\n- Add dark mode toggle\n- Update docs"
+}
+```
+
+#### `delete_scratchpad`
+
+Delete a scratchpad.
+
+**Parameters:**
+- `project_id` (string, required): Project identifier
+- `agent_id` (string, required): Agent identifier
 
 ## Memory Isolation
 
@@ -304,6 +365,29 @@ uv run ruff check src/
 uv run black src/ tests/
 ```
 
+## Memories vs Scratchpad
+
+| Feature | Memories | Scratchpad |
+|---------|----------|------------|
+| **Purpose** | Long-term knowledge | Temporary notes |
+| **Quantity** | Many per agent | One per agent/project |
+| **Searchable** | Yes (semantic) | No |
+| **Storage** | Vector database | JSON file |
+| **Best for** | Facts, preferences, decisions | TODOs, drafts, scratch work |
+
+**When to use Memories:**
+- Important information to remember long-term
+- Facts you want to search for later
+- User preferences and requirements
+- Project decisions and architecture notes
+
+**When to use Scratchpad:**
+- Temporary TODOs and task lists
+- Draft text before committing
+- Quick notes during debugging
+- Tracking current work session
+- Brainstorming ideas
+
 ## Use Cases
 
 ### Solo Agent
@@ -363,6 +447,32 @@ store_memory(
 )
 
 # Memories are isolated by project
+```
+
+### Using Scratchpad for Session Notes
+
+```python
+# Start of coding session
+create_scratchpad(
+  project_id="my-saas",
+  agent_id="cursor",
+  content="Session Goals:\n- Fix login bug\n- Add email validation"
+)
+
+# During work, update as you go
+update_scratchpad(
+  project_id="my-saas",
+  agent_id="cursor",
+  content="Session Goals:\n✓ Fixed login bug\n- Add email validation\n\nNotes:\n- Bug was in JWT expiry check"
+)
+
+# Important learnings go to memories
+store_memory(
+  project_id="my-saas",
+  agent_id="cursor",
+  content="Login bug: JWT expiry was checking milliseconds instead of seconds",
+  metadata={"category": "issue", "fixed": True}
+)
 ```
 
 ## Memory Best Practices
