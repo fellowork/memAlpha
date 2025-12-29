@@ -9,9 +9,8 @@ from mcp.server.stdio import stdio_server
 from mcp.types import Tool, TextContent
 
 from src.memory_store import MemoryStore
-from src.scratchpad_store import ScratchpadStore
 from src.embeddings import get_embedding_provider
-from src.models import MemoryCreate, MemoryUpdate, ScratchpadCreate, ScratchpadUpdate
+from src.models import MemoryCreate, MemoryUpdate
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -21,9 +20,8 @@ logger = logging.getLogger("memalpha")
 # Initialize the MCP server
 app = Server("memalpha")
 
-# Global stores (initialized on startup)
+# Global memory store (initialized on startup)
 memory_store: Optional[MemoryStore] = None
-scratchpad_store: Optional[ScratchpadStore] = None
 
 
 def get_memory_suggestions() -> Dict[str, Any]:
@@ -279,103 +277,18 @@ async def list_tools() -> List[Tool]:
                 "required": []
             }
         ),
-        Tool(
-            name="create_scratchpad",
-            description=(
-                "Create a scratchpad for an agent in a project. "
-                "Each agent can have ONE scratchpad per project for taking notes, "
-                "tracking TODOs, or jotting down temporary information."
-            ),
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "project_id": {
-                        "type": "string",
-                        "description": "Project identifier (required)"
-                    },
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier (required)"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "Initial scratchpad content (optional, can be empty)",
-                        "default": ""
-                    }
-                },
-                "required": ["project_id", "agent_id"]
-            }
-        ),
-        Tool(
-            name="get_scratchpad",
-            description="Get the scratchpad for an agent in a project.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "project_id": {
-                        "type": "string",
-                        "description": "Project identifier (required)"
-                    },
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier (required)"
-                    }
-                },
-                "required": ["project_id", "agent_id"]
-            }
-        ),
-        Tool(
-            name="update_scratchpad",
-            description="Update the scratchpad content for an agent in a project.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "project_id": {
-                        "type": "string",
-                        "description": "Project identifier (required)"
-                    },
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier (required)"
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "New scratchpad content (required)"
-                    }
-                },
-                "required": ["project_id", "agent_id", "content"]
-            }
-        ),
-        Tool(
-            name="delete_scratchpad",
-            description="Delete the scratchpad for an agent in a project.",
-            inputSchema={
-                "type": "object",
-                "properties": {
-                    "project_id": {
-                        "type": "string",
-                        "description": "Project identifier (required)"
-                    },
-                    "agent_id": {
-                        "type": "string",
-                        "description": "Agent identifier (required)"
-                    }
-                },
-                "required": ["project_id", "agent_id"]
-            }
-        ),
     ]
 
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> List[TextContent]:
     """Handle tool calls."""
-    global memory_store, scratchpad_store
+    global memory_store
     
-    if memory_store is None or scratchpad_store is None:
+    if memory_store is None:
         return [TextContent(
             type="text",
-            text="Error: Stores not initialized"
+            text="Error: Memory store not initialized"
         )]
     
     try:
@@ -539,97 +452,6 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
             
             return [TextContent(type="text", text=response)]
         
-        elif name == "create_scratchpad":
-            scratchpad_create = ScratchpadCreate(
-                project_id=arguments["project_id"],
-                agent_id=arguments["agent_id"],
-                content=arguments.get("content", "")
-            )
-            scratchpad = scratchpad_store.create_scratchpad(scratchpad_create)
-            
-            if not scratchpad:
-                return [TextContent(
-                    type="text",
-                    text=f"Scratchpad already exists for agent '{arguments['agent_id']}' "
-                         f"in project '{arguments['project_id']}'. Use update_scratchpad to modify it."
-                )]
-            
-            return [TextContent(
-                type="text",
-                text=f"Scratchpad created successfully!\n\n"
-                     f"Project: {scratchpad.project_id}\n"
-                     f"Agent: {scratchpad.agent_id}\n"
-                     f"Content: {scratchpad.content if scratchpad.content else '(empty)'}\n"
-                     f"Created: {scratchpad.created_at}"
-            )]
-        
-        elif name == "get_scratchpad":
-            scratchpad = scratchpad_store.get_scratchpad(
-                project_id=arguments["project_id"],
-                agent_id=arguments["agent_id"]
-            )
-            
-            if not scratchpad:
-                return [TextContent(
-                    type="text",
-                    text=f"No scratchpad found for agent '{arguments['agent_id']}' "
-                         f"in project '{arguments['project_id']}'. "
-                         f"Use create_scratchpad to create one."
-                )]
-            
-            return [TextContent(
-                type="text",
-                text=f"Scratchpad:\n\n"
-                     f"{scratchpad.content}\n\n"
-                     f"---\n"
-                     f"Project: {scratchpad.project_id}\n"
-                     f"Agent: {scratchpad.agent_id}\n"
-                     f"Created: {scratchpad.created_at}\n"
-                     f"Updated: {scratchpad.updated_at}"
-            )]
-        
-        elif name == "update_scratchpad":
-            update = ScratchpadUpdate(content=arguments["content"])
-            scratchpad = scratchpad_store.update_scratchpad(
-                project_id=arguments["project_id"],
-                agent_id=arguments["agent_id"],
-                update=update
-            )
-            
-            if not scratchpad:
-                return [TextContent(
-                    type="text",
-                    text=f"No scratchpad found for agent '{arguments['agent_id']}' "
-                         f"in project '{arguments['project_id']}'. "
-                         f"Use create_scratchpad to create one first."
-                )]
-            
-            return [TextContent(
-                type="text",
-                text=f"Scratchpad updated successfully!\n\n"
-                     f"Updated: {scratchpad.updated_at}\n\n"
-                     f"New content:\n{scratchpad.content}"
-            )]
-        
-        elif name == "delete_scratchpad":
-            success = scratchpad_store.delete_scratchpad(
-                project_id=arguments["project_id"],
-                agent_id=arguments["agent_id"]
-            )
-            
-            if success:
-                return [TextContent(
-                    type="text",
-                    text=f"Scratchpad deleted successfully for agent '{arguments['agent_id']}' "
-                         f"in project '{arguments['project_id']}'."
-                )]
-            else:
-                return [TextContent(
-                    type="text",
-                    text=f"No scratchpad found to delete for agent '{arguments['agent_id']}' "
-                         f"in project '{arguments['project_id']}'."
-                )]
-        
         else:
             return [TextContent(
                 type="text",
@@ -646,9 +468,9 @@ async def call_tool(name: str, arguments: Any) -> List[TextContent]:
 
 async def main():
     """Main entry point for the MCP server."""
-    global memory_store, scratchpad_store
+    global memory_store
     
-    # Initialize stores
+    # Initialize embedding provider and memory store
     logger.info("Initializing memAlpha...")
     try:
         embedding_provider = get_embedding_provider()
@@ -657,9 +479,6 @@ async def main():
         
         memory_store = MemoryStore(embedding_provider=embedding_provider)
         logger.info(f"Memory store initialized at: {memory_store.data_path}")
-        
-        scratchpad_store = ScratchpadStore()
-        logger.info(f"Scratchpad store initialized at: {scratchpad_store.data_path}")
     except Exception as e:
         logger.error(f"Failed to initialize: {str(e)}")
         raise

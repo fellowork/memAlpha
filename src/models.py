@@ -82,33 +82,3 @@ class SearchResult(BaseModel):
     memory: Memory = Field(..., description="Memory object")
     similarity_score: float = Field(..., ge=0.0, le=1.0, description="Similarity score")
 
-
-# Scratchpad models
-
-class ScratchpadCreate(BaseModel):
-    """Model for creating a new scratchpad."""
-    
-    project_id: str = Field(..., min_length=1, description="Project identifier")
-    agent_id: str = Field(..., min_length=1, description="Agent identifier")
-    content: str = Field(default="", description="Scratchpad content (can be empty)")
-
-
-class ScratchpadUpdate(BaseModel):
-    """Model for updating a scratchpad."""
-    
-    content: str = Field(..., description="Updated scratchpad content")
-
-
-class Scratchpad(BaseModel):
-    """Complete scratchpad object."""
-    
-    model_config = ConfigDict(
-        json_encoders={datetime: lambda v: v.isoformat()}
-    )
-    
-    project_id: str = Field(..., description="Project identifier")
-    agent_id: str = Field(..., description="Agent identifier")
-    content: str = Field(..., description="Scratchpad content")
-    created_at: datetime = Field(default_factory=datetime.now, description="Creation timestamp")
-    updated_at: datetime = Field(default_factory=datetime.now, description="Last update timestamp")
-
