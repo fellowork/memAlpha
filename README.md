@@ -411,5 +411,3 @@ Free to use for any purpose, including commercial. See LICENSE file for details.
 - Open an issue on GitHub
 
 ---
-
-**Built with ❤️ using TDD • 64 Tests • 95%+ Coverage**
