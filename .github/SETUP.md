@@ -295,12 +295,24 @@ Add to workflows:
 2. Disable `test-and-merge.yml`
 3. PRs will be created but require manual approval
 
-### "Auto-merge is not allowed"
+### "Auto-merge is not allowed" or "Protected branch rules not configured"
 
-**Solution:** Enable in repository settings:
-- Settings → Actions → General
-- ☑️ "Allow GitHub Actions to create and approve pull requests"
-- If greyed out, see above ⬆️
+**Cause:** Branch protection not configured (required for auto-merge feature)
+
+**Solution 1 - Enable Branch Protection (Recommended):**
+1. Go to: Repository → Settings → Branches
+2. Click: "Add branch protection rule"
+3. Configure:
+   - Branch name pattern: `main`
+   - ☑️ "Require a pull request before merging"
+   - ☑️ "Require approvals": 0
+   - ☑️ "Allow auto-merge"
+4. Save
+
+**Solution 2 - Direct Merge (Current Workflow Default):**
+The workflow now automatically falls back to direct merge if branch protection isn't configured. This works without any additional setup!
+
+**Note:** The workflow tries auto-merge first, then falls back to direct merge if it fails. Both methods work fine.
 
 ### "Branch protection rules not satisfied"
 

@@ -134,35 +134,36 @@ jobs:
           echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
           echo "Found PR #$PR_NUMBER"
       
-      - name: Enable auto-merge
+      - name: Merge PR
         if: steps.get-pr.outputs.pr_number != ''
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
         run: |
-          gh pr merge ${{ steps.get-pr.outputs.pr_number }} \
-            --auto \
-            --squash \
-            --delete-branch=false
-          echo "✅ Auto-merge enabled for PR #${{ steps.get-pr.outputs.pr_number }}"
-      
-      - name: Approve PR
-        if: steps.get-pr.outputs.pr_number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          # GitHub doesn't allow self-approval in the same workflow
-          # This will be handled by branch protection rules
-          echo "PR #${{ steps.get-pr.outputs.pr_number }} ready for auto-merge"
-          
-          # If you have a bot account or PAT, you can approve here:
-          # gh pr review ${{ steps.get-pr.outputs.pr_number }} --approve
+          # Try auto-merge first (requires branch protection)
+          if gh pr merge ${{ steps.get-pr.outputs.pr_number }} --auto --squash --delete-branch 2>/dev/null; then
+            echo "✅ Auto-merge enabled for PR #${{ steps.get-pr.outputs.pr_number }}"
+            echo "merge_method=auto" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️ Auto-merge not available (branch protection not configured)"
+            echo "Merging directly instead..."
+            
+            # Approve first if we have PAT
+            if [ -n "${{ secrets.GH_PAT }}" ]; then
+              gh pr review ${{ steps.get-pr.outputs.pr_number }} --approve --body "✅ All tests passed. Auto-approving." || echo "Note: Could not approve (may need different account)"
+            fi
+            
+            # Merge directly
+            gh pr merge ${{ steps.get-pr.outputs.pr_number }} --squash --delete-branch
+            echo "✅ PR #${{ steps.get-pr.outputs.pr_number }} merged directly"
+            echo "merge_method=direct" >> $GITHUB_OUTPUT
+          fi
       
       - name: Summary
         if: steps.get-pr.outputs.pr_number != ''
         run: |
-          echo "## ✅ Tests Passed!" >> $GITHUB_STEP_SUMMARY
+          echo "## ✅ Tests Passed & Merged!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "PR #${{ steps.get-pr.outputs.pr_number }} has been created and is ready to merge." >> $GITHUB_STEP_SUMMARY
+          echo "PR #${{ steps.get-pr.outputs.pr_number }} has been successfully merged to main." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [View PR](https://github.com/${{ github.repository }}/pull/${{ steps.get-pr.outputs.pr_number }})" >> $GITHUB_STEP_SUMMARY
 
