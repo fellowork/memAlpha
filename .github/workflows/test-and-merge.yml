@@ -1,4 +1,4 @@
-name: Test and Auto-Merge to Main
+name: Test and Merge to Main
 
 on:
   push:
@@ -7,19 +7,17 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
-  checks: write
 
 jobs:
-  test:
-    name: Run Tests
+  test-and-merge:
+    name: Test & Merge
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Full history for better git operations
+          fetch-depth: 0  # Full history for merge
       
       - name: Install uv
         uses: astral-sh/setup-uv@v4
@@ -48,122 +46,35 @@ jobs:
           source .venv/bin/activate
           pytest tests/test_models.py tests/test_embeddings.py tests/test_memory_store.py tests/test_scratchpad.py \
             --cov=src --cov-report=term-missing -v
-
-  create-pr:
-    name: Create PR to Main
-    needs: test
-    runs-on: ubuntu-latest
-    if: success()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       
-      - name: Check if PR exists
-        id: check-pr
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Merge to main
+        if: success()
         run: |
-          PR_NUMBER=$(gh pr list --head dev --base main --json number --jq '.[0].number')
-          if [ -n "$PR_NUMBER" ]; then
-            echo "pr_exists=true" >> $GITHUB_OUTPUT
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-            echo "Existing PR found: #$PR_NUMBER"
-          else
-            echo "pr_exists=false" >> $GITHUB_OUTPUT
-            echo "No existing PR found"
-          fi
-      
-      - name: Create Pull Request
-        if: steps.check-pr.outputs.pr_exists == 'false'
-        id: create-pr
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          PR_URL=$(gh pr create \
-            --base main \
-            --head dev \
-            --title "🚀 Auto-merge: dev → main" \
-            --body "## Automated PR from dev to main
-
-          ✅ All tests passed on dev branch
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           
-          **Test Results:**
-          - Unit tests: Passed
-          - Coverage: See report above
+          # Fetch and checkout main
+          git fetch origin main
+          git checkout main
           
-          **Changes:**
-          This PR contains all changes from the \`dev\` branch that have passed tests.
+          # Merge dev into main
+          git merge origin/dev --no-ff -m "chore: merge dev to main after successful tests
           
-          ---
-          🤖 This PR was automatically created and will be auto-merged.")
+          ✅ All tests passed
+          🤖 Automated merge from dev branch
           
-          echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
-          echo "Created PR: $PR_URL"
-      
-      - name: Get PR number
-        id: get-pr-number
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "${{ steps.check-pr.outputs.pr_exists }}" == "true" ]; then
-            echo "pr_number=${{ steps.check-pr.outputs.pr_number }}" >> $GITHUB_OUTPUT
-          else
-            PR_NUMBER=$(gh pr list --head dev --base main --json number --jq '.[0].number')
-            echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          fi
-
-  auto-merge:
-    name: Auto-Merge PR
-    needs: [test, create-pr]
-    runs-on: ubuntu-latest
-    if: success()
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Get PR number
-        id: get-pr
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          PR_NUMBER=$(gh pr list --head dev --base main --json number --jq '.[0].number')
-          echo "pr_number=$PR_NUMBER" >> $GITHUB_OUTPUT
-          echo "Found PR #$PR_NUMBER"
-      
-      - name: Merge PR
-        if: steps.get-pr.outputs.pr_number != ''
-        env:
-          GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
-        run: |
-          # Try auto-merge first (requires branch protection)
-          if gh pr merge ${{ steps.get-pr.outputs.pr_number }} --auto --squash --delete-branch 2>/dev/null; then
-            echo "✅ Auto-merge enabled for PR #${{ steps.get-pr.outputs.pr_number }}"
-            echo "merge_method=auto" >> $GITHUB_OUTPUT
-          else
-            echo "⚠️ Auto-merge not available (branch protection not configured)"
-            echo "Merging directly instead..."
-            
-            # Approve first if we have PAT
-            if [ -n "${{ secrets.GH_PAT }}" ]; then
-              gh pr review ${{ steps.get-pr.outputs.pr_number }} --approve --body "✅ All tests passed. Auto-approving." || echo "Note: Could not approve (may need different account)"
-            fi
-            
-            # Merge directly
-            gh pr merge ${{ steps.get-pr.outputs.pr_number }} --squash --delete-branch
-            echo "✅ PR #${{ steps.get-pr.outputs.pr_number }} merged directly"
-            echo "merge_method=direct" >> $GITHUB_OUTPUT
-          fi
+          Commit: ${{ github.sha }}"
+          
+          # Push to main
+          git push origin main
+          
+          echo "✅ Successfully merged dev to main"
       
       - name: Summary
-        if: steps.get-pr.outputs.pr_number != ''
+        if: success()
         run: |
           echo "## ✅ Tests Passed & Merged!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "PR #${{ steps.get-pr.outputs.pr_number }} has been successfully merged to main." >> $GITHUB_STEP_SUMMARY
+          echo "Changes from \`dev\` have been merged to \`main\`." >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 [View PR](https://github.com/${{ github.repository }}/pull/${{ steps.get-pr.outputs.pr_number }})" >> $GITHUB_STEP_SUMMARY
-
+          echo "Commit: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

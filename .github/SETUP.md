@@ -27,25 +27,6 @@ This repository uses GitHub Actions for automated testing and deployment.
 
 ## 🚀 Setup Instructions
 
-### Optional: Create Labels (Recommended)
-
-Create helpful labels for automated PRs:
-
-```bash
-# Using GitHub CLI
-gh label create "automated" --color "0E8A16" --description "Automated by GitHub Actions"
-gh label create "auto-merge" --color "1D76DB" --description "Ready for auto-merge"
-
-# Or create via GitHub UI:
-# Repository → Issues → Labels → New label
-```
-
-**Labels:**
-- `automated` - Green (#0E8A16) - Marks automated PRs
-- `auto-merge` - Blue (#1D76DB) - Indicates auto-merge enabled
-
-*Note: Labels are optional. The workflow works without them.*
-
 ### Required: Repository Settings
 
 1. **Enable Actions**
@@ -55,22 +36,7 @@ gh label create "auto-merge" --color "1D76DB" --description "Ready for auto-merg
 2. **Workflow Permissions**
    - Go to: `Settings` → `Actions` → `General` → `Workflow permissions`
    - Select: "Read and write permissions"
-   - Check: ☑️ "Allow GitHub Actions to create and approve pull requests"
-   
-   **⚠️ If this option is greyed out:**
-   
-   **For Organization Repositories:**
-   1. Go to **Organization Settings**: `https://github.com/organizations/YOUR_ORG/settings`
-   2. Navigate to: `Actions` → `General`
-   3. Scroll to: `Workflow permissions`
-   4. Enable: ☑️ "Allow GitHub Actions to create and approve pull requests"
-   5. Save, then return to repository settings
-   
-   **Alternative: Use Personal Access Token (PAT):**
-   1. Create PAT: https://github.com/settings/tokens
-   2. Select scopes: `repo`, `workflow`
-   3. Add to repository secrets as `GH_PAT`
-   4. Workflow will automatically use it (already configured)
+   - ✅ That's it! No special permissions needed for direct merge
 
 ### Optional: Branch Protection Rules
 
@@ -268,51 +234,16 @@ Add to workflows:
 
 ## 🐛 Troubleshooting
 
-### "Allow GitHub Actions to create and approve pull requests" is Greyed Out
+### "Permission denied" or "refusing to allow a GitHub App to create or update workflow"
 
-**Cause:** Organization-level policy restriction
+**Cause:** Workflow files need special permissions
 
-**Solution 1 - Organization Settings (Recommended):**
-1. You need **organization admin** access
-2. Go to: `https://github.com/organizations/YOUR_ORG/settings/actions`
-3. Scroll to: "Workflow permissions"
-4. Enable: ☑️ "Allow GitHub Actions to create and approve pull requests"
-5. Save and return to repository settings (should now be enabled)
-
-**Solution 2 - Use Personal Access Token:**
-1. Create PAT at: https://github.com/settings/tokens
-   - Click "Generate new token (classic)"
-   - Name: `memAlpha Auto-Merge`
-   - Scopes: ☑️ `repo` + ☑️ `workflow`
-   - Generate and copy token
-2. Add to repo secrets:
-   - Repository → Settings → Secrets → Actions
-   - New secret: `GH_PAT` = your token
-3. Workflow already configured to use it!
-
-**Solution 3 - Simplified Workflow (Manual Approval):**
-1. Rename `test-and-pr.yml.disabled` to `test-and-pr.yml`
-2. Disable `test-and-merge.yml`
-3. PRs will be created but require manual approval
-
-### "Auto-merge is not allowed" or "Protected branch rules not configured"
-
-**Cause:** Branch protection not configured (required for auto-merge feature)
-
-**Solution 1 - Enable Branch Protection (Recommended):**
-1. Go to: Repository → Settings → Branches
-2. Click: "Add branch protection rule"
-3. Configure:
-   - Branch name pattern: `main`
-   - ☑️ "Require a pull request before merging"
-   - ☑️ "Require approvals": 0
-   - ☑️ "Allow auto-merge"
-4. Save
-
-**Solution 2 - Direct Merge (Current Workflow Default):**
-The workflow now automatically falls back to direct merge if branch protection isn't configured. This works without any additional setup!
-
-**Note:** The workflow tries auto-merge first, then falls back to direct merge if it fails. Both methods work fine.
+**Solution:**
+1. Go to: `Settings` → `Actions` → `General`
+2. Under "Workflow permissions":
+   - Select: "Read and write permissions"
+   - ☑️ "Allow GitHub Actions to create and approve pull requests"
+3. Save
 
 ### "Branch protection rules not satisfied"
 
@@ -330,21 +261,6 @@ The workflow now automatically falls back to direct merge if branch protection i
 
 **Note:** This is normal! The workflow will update the existing PR.
 
-### "could not add label: 'automated' not found"
-
-**Cause:** Labels don't exist in the repository
-
-**Solution:** Labels are now optional (workflow updated). To add them:
-
-```bash
-# Create labels using gh CLI
-gh label create "automated" --color "0E8A16" --description "Automated by GitHub Actions"
-gh label create "auto-merge" --color "1D76DB" --description "Ready for auto-merge"
-
-# Or via UI: Repository → Issues → Labels → New label
-```
-
-The workflow will work fine without labels!
 
 ## 📚 Additional Resources
 
