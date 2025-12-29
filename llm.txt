@@ -1,0 +1,181 @@
+# memAlpha - AI Agent Memory System
+
+> Local memory system for AI coding agents with semantic search and scratchpad functionality
+
+## Quick Overview
+
+memAlpha provides AI agents with two types of memory:
+1. **Memories** - Long-term searchable knowledge (vector database)
+2. **Scratchpads** - Temporary notes/TODOs (one per agent/project)
+
+## Installation
+
+```bash
+# Run directly from GitHub (no installation needed)
+uvx --from git+https://github.com/fellowork/memAlpha memalpha
+```
+
+## Configuration
+
+Add to MCP client config (Claude Desktop, Cursor, etc.):
+
+```json
+{
+  "memAlpha": {
+    "command": "uvx",
+    "args": ["--from", "git+https://github.com/fellowork/memAlpha", "memalpha"]
+  }
+}
+```
+
+### Environment Variables (Optional)
+
+```bash
+# Use OpenAI embeddings instead of local (default: local)
+MEMALPHA_EMBEDDING_PROVIDER=openai
+MEMALPHA_OPENAI_API_KEY=sk-...
+```
+
+## MCP Tools Available
+
+### Memory Tools (Long-term Knowledge)
+
+- `store_memory` - Store searchable knowledge
+- `search_memories` - Semantic search
+- `get_memory` - Retrieve by ID
+- `update_memory` - Update existing memory
+- `delete_memory` - Delete memory
+- `list_memories` - List all memories
+- `get_memory_suggestions` - Get best practices
+
+### Scratchpad Tools (Temporary Notes)
+
+- `create_scratchpad` - Create notepad (one per agent/project)
+- `get_scratchpad` - Get current scratchpad
+- `update_scratchpad` - Update notes
+- `delete_scratchpad` - Delete scratchpad
+
+## Key Concepts
+
+### Agent Isolation
+Each agent gets separate memory space per project:
+- `project_id` + `agent_id` = isolated namespace
+- No cross-agent memory access
+- Different embedding providers = different collections
+
+### Memories vs Scratchpad
+
+| Feature | Memories | Scratchpad |
+|---------|----------|------------|
+| Purpose | Long-term knowledge | Temporary notes |
+| Quantity | Many | One per agent/project |
+| Searchable | Yes (semantic) | No |
+| Use for | Facts, decisions, preferences | TODOs, drafts, session notes |
+
+## Usage Examples
+
+### Store Important Knowledge
+```python
+store_memory(
+    project_id="my-app",
+    agent_id="cursor",
+    content="User prefers TypeScript for type safety",
+    metadata={"category": "preference", "importance": 8}
+)
+```
+
+### Search Semantically
+```python
+search_memories(
+    project_id="my-app",
+    agent_id="cursor",
+    query="what language does user prefer",
+    limit=5
+)
+```
+
+### Use Scratchpad for Session Work
+```python
+# Start session
+create_scratchpad(
+    project_id="my-app",
+    agent_id="cursor",
+    content="TODO:\n- Fix auth bug\n- Add dark mode"
+)
+
+# Update as you work
+update_scratchpad(
+    project_id="my-app",
+    agent_id="cursor",
+    content="TODO:\n✓ Fixed auth bug\n- Add dark mode\n\nNotes: Bug was in JWT validation"
+)
+```
+
+## Data Storage
+
+All data stored locally:
+- **Memories**: `~/.local/share/memalpha/chroma/` (ChromaDB)
+- **Scratchpads**: `~/.local/share/memalpha/scratchpads/` (JSON files)
+- **Models**: `~/.local/share/memalpha/models/` (embedding models)
+
+## Privacy
+
+- 100% local by default (no external calls)
+- Optional OpenAI embeddings (user controlled)
+- No telemetry or tracking
+- All data stays on your machine
+
+## Architecture
+
+- **Vector Store**: ChromaDB (embedded, persistent)
+- **Embeddings**: sentence-transformers (local) or OpenAI API
+- **MCP Server**: Python with stdio transport
+- **Package Manager**: uv (fast, zero-config)
+
+## Performance
+
+- Local embeddings: ~50ms per text (CPU)
+- Search: Sub-second for 1000s of memories
+- Storage: ~1KB per memory
+- Tested scale: 10,000+ memories per agent
+
+## When to Use Each
+
+**Use Memories for:**
+- Important facts to remember long-term
+- User preferences and requirements
+- Project decisions and architecture
+- Searchable knowledge base
+
+**Use Scratchpad for:**
+- Current session TODOs
+- Debugging notes
+- Draft text before committing
+- Temporary tracking
+
+## Best Practices
+
+1. Store specific, actionable information in memories
+2. Use consistent tagging across related memories
+3. Mark important decisions with high importance scores
+4. Use scratchpad for temporary work, migrate to memories for permanent knowledge
+5. Update memories rather than creating duplicates
+6. Search before storing to avoid redundancy
+
+## Technical Details
+
+- **Language**: Python 3.10+
+- **Dependencies**: mcp, chromadb, sentence-transformers, openai, pydantic
+- **Test Coverage**: 95%+ on core modules
+- **License**: MIT (fellowork GmbH)
+
+## Links
+
+- Repository: https://github.com/fellowork/memAlpha
+- Issues: https://github.com/fellowork/memAlpha/issues
+- Documentation: See README.md in repository
+
+---
+
+This file is optimized for AI/LLM consumption. For human-readable docs, see README.md.
+
