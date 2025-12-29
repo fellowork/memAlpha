@@ -93,15 +93,23 @@ For automatic merging to work smoothly:
      - ☑️ Require status checks to pass before merging
        - Add: `Run Tests`
 
-### Optional: Code Coverage (Codecov)
+### Optional: Code Coverage Service (Not Configured)
 
-To see coverage reports in PRs:
+The workflows currently show coverage in the console output only. If you want coverage badges and PR comments, you can configure Codecov:
 
+**What is Codecov?**
+- Shows test coverage as badges in README
+- Comments on PRs with coverage changes
+- Tracks coverage trends over time
+
+**To add it (optional):**
 1. Sign up at [codecov.io](https://codecov.io)
 2. Connect your repository
-3. Add secret: `Settings` → `Secrets and variables` → `Actions`
-   - Name: `CODECOV_TOKEN`
-   - Value: Your Codecov token
+3. Get your Codecov token
+4. Add to repository secrets: `CODECOV_TOKEN`
+5. Uncomment Codecov steps in workflows
+
+**Current setup:** Coverage reports generated locally (HTML + terminal), which is sufficient for most projects.
 
 ## 🔧 Usage
 
@@ -168,17 +176,20 @@ Push again
 
 ### View Coverage Reports
 
-- Codecov (if configured): See coverage badge in PR
-- Artifacts: Download coverage HTML reports from workflow
+- **Console Output**: See coverage in workflow logs
+- **HTML Report**: Download from workflow artifacts (test-main.yml only)
+- **Terminal**: Coverage shown during test run
 
 ## 📋 Workflow Status Badges
 
-Add to your README:
+Add to your README to show build status:
 
 ```markdown
-![Tests](https://github.com/YOUR_USERNAME/memAlpha/actions/workflows/test-and-merge.yml/badge.svg)
-![Main Tests](https://github.com/YOUR_USERNAME/memAlpha/actions/workflows/test-main.yml/badge.svg)
+![Dev Branch Tests](https://github.com/YOUR_USERNAME/memAlpha/actions/workflows/test-and-merge.yml/badge.svg?branch=dev)
+![Main Branch Tests](https://github.com/YOUR_USERNAME/memAlpha/actions/workflows/test-main.yml/badge.svg?branch=main)
 ```
+
+Replace `YOUR_USERNAME` with your GitHub username or organization name.
 
 ## 🛠️ Customization
 
